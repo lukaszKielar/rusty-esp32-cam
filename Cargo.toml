@@ -30,6 +30,8 @@ esp-idf-svc = { version = "0.49", features = [
     "embassy-time-driver",
     "embassy-sync",
 ] }
+toml-cfg = "0.2.0"
+anyhow = "1.0.95"
 
 [build-dependencies]
 embuild = "0.32.0"
@@ -39,4 +41,4 @@ cc = "=1.1.31"
 [[package.metadata.esp-idf-sys.extra_components]]
 remote_component = { name = "espressif/esp32-camera", version = "2.0.15" }
 bindings_header = "components/bindings.h"
-bindings_module = "camera"
+bindings_module = "c_camera"
