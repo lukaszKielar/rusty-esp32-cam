@@ -89,7 +89,7 @@ fn main() -> Result<()> {
         pixformat_t_PIXFORMAT_JPEG,
         framesize_t_FRAMESIZE_UXGA, // QVGA || XGA || UXGA
         10,
-        1,
+        2,
         camera_fb_location_t_CAMERA_FB_IN_PSRAM,
         camera_grab_mode_t_CAMERA_GRAB_WHEN_EMPTY,
     )?;
@@ -97,22 +97,38 @@ fn main() -> Result<()> {
     let mut server = http::server::EspHttpServer::new(&http::server::Configuration::default())?;
 
     server.fn_handler("/", http::Method::Get, move |request| {
-        camera.get_framebuffer();
-        // take two frames to get a fresh one
-        let framebuffer = camera.get_framebuffer();
+        let mut response = request.into_response(
+            200,
+            Some("OK"),
+            &[("Content-Type", "multipart/x-mixed-replace; boundary=frame")],
+        )?;
 
-        if let Some(framebuffer) = framebuffer {
-            let data = framebuffer.data();
+        loop {
+            if let Some(framebuffer) = camera.get_framebuffer() {
+                let data = framebuffer.data();
 
-            let headers = [
-                ("Content-Type", "image/jpeg"),
-                ("Content-Length", &data.len().to_string()),
-            ];
-            let mut response = request.into_response(200, Some("OK"), &headers)?;
-            response.write_all(data)?;
-        } else {
-            let mut response = request.into_ok_response()?;
-            response.write_all("no framebuffer".as_bytes())?;
+                let headers = [
+                    ("Content-Type", "image/jpeg"),
+                    ("Content-Length", &data.len().to_string()),
+                ]
+                .into_iter()
+                .map(|(k, v)| format!("{}: {}", k, v))
+                .collect::<Vec<_>>()
+                .join("\r\n");
+                let headers = headers.as_bytes();
+
+                let buf = &[
+                    "--frame".as_bytes(),
+                    "\r\n".as_bytes(),
+                    headers,
+                    "\r\n\r\n".as_bytes(),
+                    data,
+                    "\r\n".as_bytes(),
+                ]
+                .concat();
+
+                response.write_all(buf)?;
+            }
         }
 
         Ok::<(), EspIOError>(())
