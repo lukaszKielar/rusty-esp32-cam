@@ -10,9 +10,6 @@
     "files.watcherExclude": {
         "**/target/**": true
     },
-    // "idf.espIdfPath": "/Users/lukasz/esp/v5.2.2/esp-idf",
-    // "idf.port": "/dev/tty.usbserial-11320",
-    // "idf.toolsPath": "/Users/lukasz/.espressif",
     "rust-analyzer.cargo.allTargets": false,
     "rust-analyzer.check.command": "clippy"
 }
